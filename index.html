@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RisePOS - Loading</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            display: grid;
+            place-items: center;
+            background: #ffffff;
+            font-family: system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 320px;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .status-text {
+            color: #4CAF50;
+            font-size: 1.1rem;
+            margin: 15px 0;
+            opacity: 0;
+            animation: fadeIn 0.5s 0.3s forwards;
+        }
+
+        .offer {
+            color: #2E7D32;
+            font-weight: 600;
+            font-size: 1.3rem;
+            opacity: 0;
+            animation: fadeIn 0.5s 0.6s forwards;
+        }
+
+        .progress {
+            height: 2px;
+            background: rgba(76, 175, 80, 0.2);
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: #4CAF50;
+            animation: load 3s linear forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes load {
+            to { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="images/Lg.png" alt="Logo" class="logo">
+        <div class="status-text">Initializing Core Systems</div>
+        <div class="offer">55% OFF Limited Offer!</div>
+        <div class="progress">
+            <div class="progress-bar"></div>
+        </div>
+    </div>
+
+    <script>
+        // Reliable redirect with fallback
+        let redirectTimer = setTimeout(() => {
+            window.location.href = 'spin.html';
+        }, 3000);
+
+        // Instant click response
+        document.body.style.cursor = 'pointer';
+        document.body.addEventListener('click', () => {
+            clearTimeout(redirectTimer);
+            window.location.href = 'spin.html';
+        });
+    </script>
+</body>
+</html>
