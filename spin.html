@@ -283,6 +283,102 @@
         font-size: 0.9rem;
         color: #666;
     }
+
+     /* Add these new styles */
+     .claim-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .claim-modal.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .claim-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        width: 90%;
+        max-width: 400px;
+        position: relative;
+        transform: scale(0.8);
+        transition: transform 0.3s ease;
+    }
+
+    .claim-modal.active .claim-content {
+        transform: scale(1);
+    }
+
+    .success-animation {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .success-animation.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .checkmark {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        font-size: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        animation: checkmark 0.5s ease;
+    }
+
+    @keyframes checkmark {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.2); }
+        100% { transform: scale(1); }
+    }
+
+    .claim-btn {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: block;
+        margin: 1rem auto;
+        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    }
+
+    .claim-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+    }
     </style>
 </head>
 <body>
@@ -343,6 +439,35 @@
         </div>
     </div>
 
+   
+    <div class="claim-modal" id="claimModal">
+        <div class="claim-content">
+            <button class="close-btn" onclick="closeClaimModal()">&times;</button>
+            <h4>Claim Your Discount</h4>
+            <form id="claimForm" onsubmit="handleSubmit(event)">
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Shop Name" required>
+                </div>
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Owner Name" required>
+                </div>
+                <div class="mb-3">
+                    <input type="tel" class="form-control" placeholder="Phone Number" required>
+                </div>
+                <div class="mb-3">
+                    <input type="text" class="form-control" placeholder="Location" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Send Claim Request</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="success-animation" id="successAnimation">
+        <div class="checkmark">✓</div>
+        <h4>Claimed Successfully! Team Will Connect You Soon...</h4>
+    </div>
+    
+
     <script>
  // Mobile Viewport Meta Tag (add to HTML head)
 document.head.insertAdjacentHTML('beforeend', '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">');
@@ -353,7 +478,6 @@ window.addEventListener('DOMContentLoaded', () => {
     popup.classList.add('active');
     setTimeout(closePopup, 3000);
 
-    // Mobile-safe spin status check
     try {
         if(localStorage.getItem('hasSpun')) {
             disableSpinButton();
@@ -366,7 +490,6 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function showSavedResult() {
-    // Mobile-friendly element handling
     const elements = {
         wheel: document.querySelector('.wheel-container'),
         image: document.getElementById('resultImage'),
@@ -381,7 +504,6 @@ function showSavedResult() {
         elements.card.classList.add('active');
     }
 
-    // Retrieve and display saved result
     try {
         const savedResult = JSON.parse(localStorage.getItem('spinResult'));
         if(savedResult) {
@@ -390,23 +512,19 @@ function showSavedResult() {
         }
     } catch (e) {
         console.error('Result load error:', e);
-        elements.badge.textContent = "Special Offer!";
-        elements.price.textContent = "Contact us for details";
     }
 }
 
 function closePopup() {
-    const popup = document.getElementById('prizePopup');
-    popup.classList.remove('active');
+    document.getElementById('prizePopup').classList.remove('active');
 }
 
-// Wheel Elements
+// Spin Logic
 const wheel = document.getElementById('wheel');
 const spinBtn = document.getElementById('spinBtn');
 const SPIN_KEY = 'hasSpun';
 let isSpinning = false;
 
-// Offers Configuration
 const segments = [
     { type: 'percent', value: 55, weight: 3 },
     { type: 'percent', value: 50, weight: 2 },
@@ -416,7 +534,6 @@ const segments = [
     { type: 'percent', value: 30, weight: 1 }
 ];
 
-// Mobile Event Listeners
 spinBtn.addEventListener('click', handleSpin);
 spinBtn.addEventListener('touchstart', handleSpin);
 
@@ -437,13 +554,9 @@ function startSpin() {
     spinBtn.disabled = true;
     document.getElementById('resultCard').classList.remove('active');
 
-    // Weighted random selection
-    const weightedArray = segments.flatMap((seg, index) => 
-        Array(seg.weight).fill(index)
-    );
+    const weightedArray = segments.flatMap((seg, index) => Array(seg.weight).fill(index));
     const resultIndex = weightedArray[Math.random() * weightedArray.length | 0];
-
-    // Mobile-optimized animation
+    
     const baseRotation = 1440 + (resultIndex * 60);
     const targetRotation = baseRotation + Math.random() * 60;
     wheel.style.transform = `rotate(${targetRotation}deg)`;
@@ -455,7 +568,6 @@ function showResult(index) {
     const offer = segments[index];
     let message, priceText;
     
-    // Price calculation
     if(offer.type === 'percent') {
         const price = 12000 * (1 - offer.value/100);
         message = `${offer.value}% OFF!`;
@@ -465,57 +577,47 @@ function showResult(index) {
         priceText = `Pay ₹24,000 Once<br><small>(Save ₹12,000 vs yearly)</small>`;
     }
 
-    // Mobile-safe UI update
     requestAnimationFrame(() => {
         document.querySelector('.wheel-container').style.display = 'none';
-        const resultImage = document.getElementById('resultImage');
-        resultImage.style.display = 'block';
-        resultImage.style.opacity = '0';
-        setTimeout(() => resultImage.style.opacity = '1', 50);
-        
+        document.getElementById('resultImage').style.display = 'block';
         document.getElementById('discountBadge').textContent = message;
         document.getElementById('finalPrice').innerHTML = priceText;
         document.getElementById('resultCard').classList.add('active');
     });
 
-    // Storage handling
-    try {
-        localStorage.setItem('spinResult', JSON.stringify({ message, priceText }));
-        localStorage.setItem(SPIN_KEY, 'true');
-    } catch (e) {
-        console.error('Storage failed:', e);
-    }
+    localStorage.setItem('spinResult', JSON.stringify({ message, priceText }));
+    localStorage.setItem(SPIN_KEY, 'true');
 
-    // Mobile confetti
-    if(offer.type === 'package' || offer.value >= 30) {
-        createMobileConfetti();
-    }
-
+    createClaimButton();
     isSpinning = false;
     disableSpinButton();
 }
 
-function createMobileConfetti() {
-    const confettiCount = window.innerWidth < 768 ? 25 : 40;
-    const container = document.createElement('div');
-    container.className = 'confetti';
+function createClaimButton() {
+    const claimBtn = document.createElement('button');
+    claimBtn.className = 'claim-btn';
+    claimBtn.textContent = 'CLAIM NOW';
+    claimBtn.onclick = () => document.getElementById('claimModal').classList.add('active');
     
-    for(let i = 0; i < confettiCount; i++) {
-        const piece = document.createElement('div');
-        piece.className = 'confetti-piece';
-        piece.style.cssText = `
-            left: ${Math.random() * 100}%;
-            animation: mobileConfetti ${1.5 + Math.random()}s linear;
-            background: hsl(${Math.random() * 360}, 70%, 50%);
-        `;
-        container.appendChild(piece);
-    }
-
-    document.body.appendChild(container);
-    setTimeout(() => container.remove(), 3000);
+    document.getElementById('resultCard').after(claimBtn);
 }
 
-// Inject mobile CSS
+function closeClaimModal() {
+    document.getElementById('claimModal').classList.remove('active');
+}
+
+function handleSubmit(e) {
+    e.preventDefault();
+    closeClaimModal();
+    setTimeout(() => {
+        document.getElementById('successAnimation').classList.add('active');
+        setTimeout(() => {
+            document.getElementById('successAnimation').classList.remove('active');
+        }, 2000);
+    }, 500);
+}
+
+// CSS Injection
 const mobileCSS = `
     @keyframes mobileConfetti {
         0% { transform: translateY(-100vh) rotate(0); opacity: 1; }
@@ -531,6 +633,7 @@ const mobileCSS = `
     * { -webkit-tap-highlight-color: transparent; }
 `;
 document.head.insertAdjacentHTML('beforeend', `<style>${mobileCSS}</style>`);
+
   </script>
 </body>
 </html>
