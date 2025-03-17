@@ -344,132 +344,193 @@
     </div>
 
     <script>
-      // Popup Handling
-      window.addEventListener('DOMContentLoaded', () => {
-          const popup = document.getElementById('prizePopup');
-          popup.classList.add('active');
-          setTimeout(closePopup, 3000);
-      });
-  
-      function closePopup() {
-          const popup = document.getElementById('prizePopup');
-          popup.classList.remove('active');
-      }
-  
-      // Wheel Spin Logic
-      const wheel = document.getElementById('wheel');
-      const spinBtn = document.getElementById('spinBtn');
-      const resultCard = document.getElementById('resultCard');
-      const discountBadge = document.getElementById('discountBadge');
-      const finalPrice = document.getElementById('finalPrice');
-      
-      let isSpinning = false; // Declare state variable
-  
-      // Offer Configuration
-      const segments = [
-          { type: 'percent', value: 55, weight: 3 },
-          { type: 'percent', value: 50, weight: 2 },
-          { type: 'percent', value: 30, weight: 2 },
-          { type: 'percent', value: 50, weight: 2 },
-          { type: 'package', value: 24000, weight: 1 },
-          { type: 'percent', value: 30, weight: 1 }
-      ];
-  
-      spinBtn.addEventListener('click', startSpin);
-  
-      function startSpin() {
-          if (isSpinning) return;
-          isSpinning = true;
-          spinBtn.disabled = true;
-          resultCard.classList.remove('active');
-  
-          // Generate weighted results
-          const weightedArray = segments.flatMap((seg, index) => 
-              Array(seg.weight).fill(index)
-          );
-  
-          const resultIndex = weightedArray[Math.floor(Math.random() * weightedArray.length)];
-          const targetRotation = (resultIndex * 60) + 1440 + Math.random() * 60;
-  
-          wheel.style.transform = `rotate(${targetRotation}deg)`;
-  
-          setTimeout(() => showResult(resultIndex), 3000);
-      }
-  
-      function showResult(index) {
-          const offer = segments[index];
-          let message, priceText;
-          
-          if(offer.type === 'percent') {
-              const price = 12000 * (1 - offer.value/100);
-              message = `${offer.value}% OFF!`;
-              priceText = `Now Only ₹${price.toLocaleString('en-IN')}/yr`;
-          } else {
-              message = "3 Years Package!";
-              priceText = `Pay ₹24,000 Once <br>
-                          <small>(Save ₹12,000 vs 3 yearly payments)</small>`;
-          }
-  
-          discountBadge.innerHTML = message;
-          finalPrice.innerHTML = priceText;
-          resultCard.classList.add('active');
-          
-          // Trigger confetti for good offers
-          if(offer.type === 'package' || offer.value >= 30) {
-              createConfetti();
-          }
-          
-          isSpinning = false;
-          spinBtn.disabled = true; // Keep disabled after spin
-      }
-  
-      // Confetti Animation
-      function createConfetti() {
-          const confettiContainer = document.createElement('div');
-          confettiContainer.className = 'confetti';
-          
-          for(let i = 0; i < 50; i++) {
-              const piece = document.createElement('div');
-              piece.className = 'confetti-piece';
-              piece.style.left = `${Math.random() * 100}%`;
-              piece.style.animationDelay = `${Math.random() * 0.5}s`;
-              piece.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
-              confettiContainer.appendChild(piece);
-          }
-  
-          document.body.appendChild(confettiContainer);
-          setTimeout(() => confettiContainer.remove(), 3000);
-      }
+ // Mobile Viewport Meta Tag (add to HTML head)
+document.head.insertAdjacentHTML('beforeend', '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">');
 
-      function showResult(index) {
-        const offer = segments[index];
-        let message, priceText;
-        
-        if(offer.type === 'percent') {
-            const price = 12000 * (1 - offer.value/100);
-            message = `${offer.value}% OFF!`;
-            priceText = `Now Only ₹${price.toLocaleString('en-IN')}/yr`;
-        } else {
-            message = "3 Years Package!";
-            priceText = `Pay ₹24,000 Once <br>
-                        <small>(Save ₹12,000 vs 3 yearly payments)</small>`;
-        }
+// Popup Handling
+window.addEventListener('DOMContentLoaded', () => {
+    const popup = document.getElementById('prizePopup');
+    popup.classList.add('active');
+    setTimeout(closePopup, 3000);
 
-        // Hide wheel and show image
-        document.querySelector('.wheel-container').style.display = 'none';
-        document.getElementById('resultImage').style.display = 'block';
-        
-        discountBadge.innerHTML = message;
-        finalPrice.innerHTML = priceText;
-        resultCard.classList.add('active');
-        
-        if(offer.type === 'package' || offer.value >= 30) {
-            createConfetti();
+    // Mobile-safe spin status check
+    try {
+        if(localStorage.getItem('hasSpun')) {
+            disableSpinButton();
+            showSavedResult();
+            setTimeout(closePopup, 500);
         }
-        
-        isSpinning = false;
-        spinBtn.disabled = true;
+    } catch (e) {
+        console.error('Storage error:', e);
     }
+});
+
+function showSavedResult() {
+    // Mobile-friendly element handling
+    const elements = {
+        wheel: document.querySelector('.wheel-container'),
+        image: document.getElementById('resultImage'),
+        card: document.getElementById('resultCard'),
+        badge: document.getElementById('discountBadge'),
+        price: document.getElementById('finalPrice')
+    };
+
+    if(elements.wheel && elements.image && elements.card) {
+        elements.wheel.style.display = 'none';
+        elements.image.style.display = 'block';
+        elements.card.classList.add('active');
+    }
+
+    // Retrieve and display saved result
+    try {
+        const savedResult = JSON.parse(localStorage.getItem('spinResult'));
+        if(savedResult) {
+            elements.badge.textContent = savedResult.message;
+            elements.price.innerHTML = savedResult.priceText;
+        }
+    } catch (e) {
+        console.error('Result load error:', e);
+        elements.badge.textContent = "Special Offer!";
+        elements.price.textContent = "Contact us for details";
+    }
+}
+
+function closePopup() {
+    const popup = document.getElementById('prizePopup');
+    popup.classList.remove('active');
+}
+
+// Wheel Elements
+const wheel = document.getElementById('wheel');
+const spinBtn = document.getElementById('spinBtn');
+const SPIN_KEY = 'hasSpun';
+let isSpinning = false;
+
+// Offers Configuration
+const segments = [
+    { type: 'percent', value: 55, weight: 3 },
+    { type: 'percent', value: 50, weight: 2 },
+    { type: 'percent', value: 30, weight: 2 },
+    { type: 'percent', value: 50, weight: 2 },
+    { type: 'package', value: 24000, weight: 1 },
+    { type: 'percent', value: 30, weight: 1 }
+];
+
+// Mobile Event Listeners
+spinBtn.addEventListener('click', handleSpin);
+spinBtn.addEventListener('touchstart', handleSpin);
+
+function handleSpin(e) {
+    if(e.type === 'touchstart') e.preventDefault();
+    startSpin();
+}
+
+function disableSpinButton() {
+    spinBtn.disabled = true;
+    spinBtn.textContent = 'ALREADY SPUN';
+    spinBtn.style.cssText = 'cursor: not-allowed; user-select: none;';
+}
+
+function startSpin() {
+    if (isSpinning || localStorage.getItem(SPIN_KEY)) return;
+    isSpinning = true;
+    spinBtn.disabled = true;
+    document.getElementById('resultCard').classList.remove('active');
+
+    // Weighted random selection
+    const weightedArray = segments.flatMap((seg, index) => 
+        Array(seg.weight).fill(index)
+    );
+    const resultIndex = weightedArray[Math.random() * weightedArray.length | 0];
+
+    // Mobile-optimized animation
+    const baseRotation = 1440 + (resultIndex * 60);
+    const targetRotation = baseRotation + Math.random() * 60;
+    wheel.style.transform = `rotate(${targetRotation}deg)`;
+
+    setTimeout(() => showResult(resultIndex), 3000);
+}
+
+function showResult(index) {
+    const offer = segments[index];
+    let message, priceText;
+    
+    // Price calculation
+    if(offer.type === 'percent') {
+        const price = 12000 * (1 - offer.value/100);
+        message = `${offer.value}% OFF!`;
+        priceText = `Now Only ₹${price.toLocaleString('en-IN')}/yr`;
+    } else {
+        message = "3 Years Package!";
+        priceText = `Pay ₹24,000 Once<br><small>(Save ₹12,000 vs yearly)</small>`;
+    }
+
+    // Mobile-safe UI update
+    requestAnimationFrame(() => {
+        document.querySelector('.wheel-container').style.display = 'none';
+        const resultImage = document.getElementById('resultImage');
+        resultImage.style.display = 'block';
+        resultImage.style.opacity = '0';
+        setTimeout(() => resultImage.style.opacity = '1', 50);
+        
+        document.getElementById('discountBadge').textContent = message;
+        document.getElementById('finalPrice').innerHTML = priceText;
+        document.getElementById('resultCard').classList.add('active');
+    });
+
+    // Storage handling
+    try {
+        localStorage.setItem('spinResult', JSON.stringify({ message, priceText }));
+        localStorage.setItem(SPIN_KEY, 'true');
+    } catch (e) {
+        console.error('Storage failed:', e);
+    }
+
+    // Mobile confetti
+    if(offer.type === 'package' || offer.value >= 30) {
+        createMobileConfetti();
+    }
+
+    isSpinning = false;
+    disableSpinButton();
+}
+
+function createMobileConfetti() {
+    const confettiCount = window.innerWidth < 768 ? 25 : 40;
+    const container = document.createElement('div');
+    container.className = 'confetti';
+    
+    for(let i = 0; i < confettiCount; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.cssText = `
+            left: ${Math.random() * 100}%;
+            animation: mobileConfetti ${1.5 + Math.random()}s linear;
+            background: hsl(${Math.random() * 360}, 70%, 50%);
+        `;
+        container.appendChild(piece);
+    }
+
+    document.body.appendChild(container);
+    setTimeout(() => container.remove(), 3000);
+}
+
+// Inject mobile CSS
+const mobileCSS = `
+    @keyframes mobileConfetti {
+        0% { transform: translateY(-100vh) rotate(0); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    .confetti-piece { width: 8px; height: 8px; }
+    @media (max-width: 480px) {
+        .wheel-container { width: 260px; height: 260px; }
+        .spin-btn { width: 70px!important; height: 70px!important; }
+        .result-card { padding: 1rem; margin: 1rem 0; }
+        #resultImage img { max-width: 95%; }
+    }
+    * { -webkit-tap-highlight-color: transparent; }
+`;
+document.head.insertAdjacentHTML('beforeend', `<style>${mobileCSS}</style>`);
   </script>
 </body>
 </html>
